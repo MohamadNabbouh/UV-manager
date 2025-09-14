@@ -1,103 +1,145 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { Card, Button, Row } from '@/components/ui';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useState } from 'react';
+import { useClaimBalances } from '@/hooks/useClaimBalances';
+import { useClaimTokens } from '@/hooks/useClaimTokens';
+import { formatUnits } from 'viem';
+
+export default function Page() {
+  const [rewardAmt, setRewardAmt] = useState<string>('0');
+  const [rewardToken, setRewardToken] = useState<'HONEY' | 'YBGT'>('HONEY');
+  const [claimingFees, setClaimingFees] = useState(false);
+
+  // Use the custom hooks
+  const { balances, isLoading: balancesLoading, error: balancesError, refetchAll } = useClaimBalances();
+  const { claimHoney, claimYBGT} = useClaimTokens();
+
+  // Format token amounts for display
+  const formatTokenAmount = (raw: bigint | undefined, decimals: number = 18): string => {
+    if (!raw) return '0';
+    const formatted = formatUnits(raw, decimals);
+    return Number(formatted).toLocaleString('en-US', { maximumFractionDigits: 2 });
+  };
+
+  // Claim functions
+  async function claimPerformanceFees() {
+    setClaimingFees(true);
+    try {
+      await Promise.all([claimHoney(), claimYBGT()]);
+      await refetchAll(); // Refresh balances after claiming
+    } catch (err) {
+      console.error('Error claiming performance fees:', err);
+    } finally {
+      setClaimingFees(false);
+    }
+  }
+
+  async function addRewards() {
+    console.log('add rewards', { rewardAmt, rewardToken });
+  }
+
+  async function fundRV() { 
+    console.log('fund rv'); 
+  }
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <main className="mx-auto max-w-4xl px-4 pb-16">
+      {/* Top bar */}
+      <div className="flex items-center justify-between py-6">
+        <div className="flex items-center gap-3">
+          <div className="h-6 w-6 rounded-full bg-violet-500" />
+          <span className="text-lg font-semibold">UV Manager</span>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        <ConnectButton showBalance={false} chainStatus="none" />
+      </div>
+
+      <Card className="p-4 md:p-6">
+        {/* Error Display */}
+        {balancesError && (
+          <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-red-400 text-sm">
+            Error loading balances: {balancesError.message}
+          </div>
+        )}
+        {/* 50% Performance Fees */}
+        <section className="border-b border-white/10">
+          <Row>
+            <div className="text-sm md:text-base">
+              <div className="font-medium">50% Performance Fees collected</div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right leading-tight">
+                <div className="text-sm md:text-base">
+                  {balancesLoading ? 'Loading...' : `${formatTokenAmount(balances.honey?.raw, balances.honey?.decimals)} ${balances.honey?.symbol || 'HONEY'}`}
+                </div>
+                <div className="text-xs text-white/70">
+                  {balancesLoading ? 'Loading...' : `${formatTokenAmount(balances.ybgt?.raw, balances.ybgt?.decimals)} ${balances.ybgt?.symbol || 'YBGT'}`}
+                </div>
+              </div>
+              <Button onClick={claimPerformanceFees} isLoading={claimingFees} disabled={balancesLoading || !!balancesError || claimingFees}>
+                Claim
+              </Button>
+              <div className="hidden text-xs text-white/70 md:block">Signer : Multisig 1</div>
+            </div>
+          </Row>
+        </section>
+
+        {/* Add rewards */}
+        <section className="border-b border-white/10">
+          <Row>
+            <div className="text-sm md:text-base">
+              <div className="font-medium">Add rewards to swBERA / uvBGT Stakers</div>
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                value={rewardAmt}
+                onChange={(e) => setRewardAmt(e.target.value)}
+                type="number"
+                min="0"
+                className="w-28 rounded-lg bg-purple-800/30 px-3 py-2 text-sm outline-none ring-1 ring-purple-400/30"
+              />
+              <select
+                value={rewardToken}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                onChange={(e) => setRewardToken(e.target.value as any)}
+                className="rounded-lg bg-purple-800/30 px-3 py-2 text-sm outline-none ring-1 ring-purple-400/30"
+              >
+                <option>HONEY</option>
+                <option>YBGT</option>
+              </select>
+              <Button onClick={addRewards}>Claim</Button>
+              <div className="hidden text-xs text-white/70 md:block">Signer : Multisig 1</div>
+            </div>
+          </Row>
+        </section>
+
+        {/* Recommendation text */}
+        <div className="py-6 text-sm text-white/80">
+          Based on Data above you should bribe : <span className="font-semibold">1,400,000 honey</span>
+        </div>
+
+        {/* Fund RV */}
+        <section className="space-y-3 pt-2">
+          <div className="text-sm font-medium">Fund RV</div>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <input
+              placeholder="HONEY"
+              className="flex-1 rounded-lg bg-purple-800/30 px-3 py-3 text-sm outline-none ring-1 ring-purple-400/30"
+            />
+            <Button className="md:w-28" onClick={fundRV}>Claim</Button>
+          </div>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <input
+              placeholder="BGT Rate"
+              className="flex-1 rounded-lg bg-purple-800/30 px-3 py-3 text-sm outline-none ring-1 ring-purple-400/30"
+            />
+            <div className="rounded-xl bg-purple-800/30 px-3 py-2 text-sm ring-1 ring-purple-400/30">
+              50% APR
+            </div>
+          </div>
+        </section>
+      </Card>
+    </main>
   );
 }
