@@ -37,3 +37,15 @@ export function Button(
 export function Row({ children }: { children: React.ReactNode }) {
   return <div className="flex items-center justify-between py-6">{children}</div>;
 }
+
+export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      className={cn(
+        'flex-1 rounded-lg bg-purple-800/30 px-3 py-3 text-sm outline-none ring-1 ring-purple-400/30',
+        className
+      )}
+      {...props}
+    />
+  );
+}

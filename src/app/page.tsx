@@ -1,26 +1,99 @@
 'use client';
 
-import { Card, Button, Row } from '@/components/ui';
+import { Card, Button, Row, Input } from '@/components/ui';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useClaimBalances } from '@/hooks/useClaimBalances';
 import { useClaimTokens } from '@/hooks/useClaimTokens';
-import { formatUnits } from 'viem';
+import { useAccount, usePublicClient, useReadContract, useWriteContract } from 'wagmi';
+import { formatUnits, parseUnits } from 'viem';
+import erc20Abi from '@/abis/ERC20.json';
+import treasuryDistributorAbi from '@/abis/TreasuryDistributor.json';
+
+// Environment variables
+const HONEY  = process.env.NEXT_PUBLIC_HONEY_80094!.trim() as `0x${string}`;
+const VAULT  = process.env.NEXT_PUBLIC_UV_REWARD_VAULT_UVBGT_SWBERA_CONTRACT!.trim() as `0x${string}`;
+ const SHOW   = process.env.NEXT_PUBLIC_CLAIM_DESTINATION!.trim() as `0x${string}`;
+const CHAIN  = Number(process.env.NEXT_PUBLIC_MAINNET_ID || 80094);
 
 export default function Page() {
   const [rewardAmt, setRewardAmt] = useState<string>('0');
   const [rewardToken, setRewardToken] = useState<'HONEY' | 'YBGT'>('HONEY');
   const [claimingFees, setClaimingFees] = useState(false);
+  
+  // Funding state
+  const [amt, setAmt] = useState('');
+  const [dec, setDec] = useState(18);
+  const [count, setCount] = useState<bigint | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  
+  // Percentage input for bribe calculation
+  const [bribePercentage, setBribePercentage] = useState('0');
 
   // Use the custom hooks
   const { balances, isLoading: balancesLoading, error: balancesError, refetchAll } = useClaimBalances();
   const { claimHoney, claimYBGT} = useClaimTokens();
+  
+  // Wagmi hooks
+  const { address, chainId } = useAccount();
+  const pc = usePublicClient();
+  const { writeContractAsync } = useWriteContract();
+  
+  // Contract reads
+  const { data: dDec } = useReadContract({ address: HONEY, abi: erc20Abi, functionName: 'decimals' });
+  useEffect(() => { if (typeof dDec === 'number') setDec(dDec); }, [dDec]);
+
+  // Multisig balance (SHOW is the multisig)
+  const { data: multisigBalRaw } = useReadContract({ address: HONEY, abi: erc20Abi, functionName: 'balanceOf', args: [SHOW] });
+  
+  // 50% Performance fees (HONEY from balances hook)
+  const performanceFeesRaw = balances.honey?.raw || BigInt(0);
+  
+  // Total balance = multisig + 50% performance fees
+  const totalBalanceWei = useMemo(() => {
+    const multisigBalance = (multisigBalRaw as bigint) || BigInt(0);
+    const performanceFees = performanceFeesRaw as bigint;
+    return multisigBalance + performanceFees;
+  }, [multisigBalRaw, performanceFeesRaw]);
+  
+  const showBal = useMemo(() => totalBalanceWei ? formatUnits(totalBalanceWei, dec) : '0', [totalBalanceWei, dec]);
+  
+  // Bribe calculation: total balance - (user percentage of total balance)
+  const shouldBribeWei = useMemo(() => {
+    const percentage = parseFloat(bribePercentage || '0') / 100;
+    const bribeAmount = totalBalanceWei - BigInt(Math.floor(Number(formatUnits(totalBalanceWei, dec)) * percentage * Math.pow(10, dec)));
+    return bribeAmount > BigInt(0) ? bribeAmount : BigInt(0);
+  }, [totalBalanceWei, bribePercentage, dec]);
+
+  // Staker count (try common names; if none found, keep null)
+  useEffect(() => {
+    let ok = true;
+    (async () => {
+      for (const fn of ['stakersLength', 'numStakers', 'getStakersLength'] as const) {
+        try {
+          const v = await pc!.readContract({ address: VAULT, abi: treasuryDistributorAbi, functionName: fn });
+          if (ok && typeof v === 'bigint') { setCount(v as bigint); return; }
+        } catch { }
+      }
+      if (ok) setCount(null);
+    })();
+    return () => { ok = false; };
+  }, [pc]);
 
   // Format token amounts for display
   const formatTokenAmount = (raw: bigint | undefined, decimals: number = 18): string => {
     if (!raw) return '0';
     const formatted = formatUnits(raw, decimals);
     return Number(formatted).toLocaleString('en-US', { maximumFractionDigits: 2 });
+  };
+
+  // Helper function to ensure allowance
+  const ensureAllowance = async (owner: `0x${string}`, spender: `0x${string}`, value: bigint) => {
+    const cur = await pc!.readContract({ address: HONEY, abi: erc20Abi, functionName: 'allowance', args: [owner, spender] }) as bigint;
+    if (cur >= value) return;
+    const tx = await writeContractAsync({ address: HONEY, abi: erc20Abi, functionName: 'approve', args: [spender, value] });
+    await pc!.waitForTransactionReceipt({ hash: tx as `0x${string}` });
   };
 
   // Claim functions
@@ -40,9 +113,31 @@ export default function Page() {
     console.log('add rewards', { rewardAmt, rewardToken });
   }
 
-  async function fundRV() { 
-    console.log('fund rv'); 
-  }
+  // Funding handler
+  const onFund = async () => {
+    try {
+      setErr(null);
+      setBusy(true);
+      if (!address) throw new Error('Connect wallet');
+      if (chainId && chainId !== CHAIN) throw new Error('Wrong network');
+      if (count === null) throw new Error('Staker count unavailable yet');
+      const value = parseUnits((amt || '0').trim(), dec);
+      if (value <= BigInt(0)) throw new Error('Enter a positive amount');
+
+      await ensureAllowance(address as `0x${string}`, VAULT, value);
+      const hash = await writeContractAsync({
+        address: VAULT, abi: treasuryDistributorAbi, functionName: 'fundRewardVault',
+        args: [HONEY, value, count, BigInt(0)],
+      });
+      await pc!.waitForTransactionReceipt({ hash });
+      setAmt('');
+    } catch (e: unknown) {
+      const error = e as { shortMessage?: string; message?: string };
+      setErr(error?.shortMessage || error?.message || 'Funding failed');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <main className="mx-auto max-w-4xl px-4 pb-16">
@@ -114,20 +209,45 @@ export default function Page() {
           </Row>
         </section>
 
-        {/* Recommendation text */}
-        <div className="py-6 text-sm text-white/80">
-          Based on Data above you should bribe : <span className="font-semibold">1,400,000 honey</span>
+        {/* Info lines */}
+        <div className="py-6 space-y-3">
+          <p className="text-xs text-white/60">HS: HONEY — <span className="text-white/90">Balance: {showBal}</span></p>
+          
+          {/* Percentage input */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-white/60">Keep:</span>
+            <Input 
+              value={bribePercentage} 
+              onChange={(e) => setBribePercentage(e.target.value)} 
+              placeholder="0" 
+              type="number"
+              min="0"
+              max="100"
+              className="w-12 text-center text-xs"
+            />
+            <span className="text-xs text-white/60">%</span>
+          </div>
+          
+          <p className="text-xs text-white/60">
+            Based on data above you should bribe: <span className="text-white/90">
+              {formatUnits(shouldBribeWei as bigint, dec)} HONEY
+            </span>
+          </p>
+          {err && <p className="text-xs text-red-300">{err}</p>}
         </div>
 
         {/* Fund RV */}
         <section className="space-y-3 pt-2">
           <div className="text-sm font-medium">Fund RV</div>
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
-            <input
-              placeholder="HONEY"
-              className="flex-1 rounded-lg bg-purple-800/30 px-3 py-3 text-sm outline-none ring-1 ring-purple-400/30"
+            <Input 
+              value={amt} 
+              onChange={(e) => setAmt(e.target.value)} 
+              placeholder="0.0" 
             />
-            <Button className="md:w-28" onClick={fundRV}>Claim</Button>
+            <Button className="md:w-28" onClick={onFund} disabled={busy || count === null}>
+              {busy ? 'Funding…' : 'Fund'}
+            </Button>
           </div>
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <input
