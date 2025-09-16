@@ -160,7 +160,6 @@ export default function AddRewards() {
           >
             {busy ? 'Adding...' : 'Bribe'}
           </Button>
-          <div className="hidden text-xs text-white/70 md:block">Signer : Multisig 1</div>
         </div>
       </Row>
       {error && (

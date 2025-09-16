@@ -6,7 +6,8 @@ import { useState } from "react";
 import { formatUnits } from "viem";
 
 export default function PerformanceFees() {
-  const [claimingFees, setClaimingFees] = useState(false);
+  const [claimingHoney, setClaimingHoney] = useState(false);
+  const [claimingYBGT, setClaimingYBGT] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { balances, isLoading: balancesLoading, error: balancesError, refetchAll } = useClaimBalances();
   const { claimHoney, claimYBGT } = useClaimTokens();
@@ -18,17 +19,31 @@ export default function PerformanceFees() {
     return Number(formatted).toLocaleString('en-US', { maximumFractionDigits: 2 });
   };
 
-  async function claimPerformanceFees() {
-    setClaimingFees(true);
+  async function claimHoneyTokens() {
+    setClaimingHoney(true);
     setError(null);
     try {
-      await Promise.all([claimHoney(), claimYBGT()]);
+      await claimHoney();
       await refetchAll(); // Refresh balances after claiming
     } catch (err: unknown) {
       const error = err as { shortMessage?: string; message?: string };
-      setError(error?.shortMessage || error?.message || "Claim failed");
+      setError(error?.shortMessage || error?.message || "Honey claim failed");
     } finally {
-      setClaimingFees(false);
+      setClaimingHoney(false);
+    }
+  }
+
+  async function claimYBGTTokens() {
+    setClaimingYBGT(true);
+    setError(null);
+    try {
+      await claimYBGT();
+      await refetchAll(); // Refresh balances after claiming
+    } catch (err: unknown) {
+      const error = err as { shortMessage?: string; message?: string };
+      setError(error?.shortMessage || error?.message || "yBGT claim failed");
+    } finally {
+      setClaimingYBGT(false);
     }
   }
 
@@ -47,10 +62,22 @@ export default function PerformanceFees() {
               {balancesLoading ? 'Loading...' : `${formatTokenAmount(balances.ybgt?.raw, balances.ybgt?.decimals)} ${balances.ybgt?.symbol || 'YBGT'}`}
             </div>
           </div>
-          <Button onClick={claimPerformanceFees} isLoading={claimingFees} disabled={balancesLoading || !!balancesError || claimingFees}>
-            Claim
-          </Button>
-          <div className="hidden text-xs text-white/70 md:block">Signer : Multisig 1</div>
+          <div className="flex gap-2">
+            <Button 
+              onClick={claimHoneyTokens} 
+              isLoading={claimingHoney} 
+              disabled={balancesLoading || !!balancesError || claimingHoney || claimingYBGT}
+            >
+              Claim Honey
+            </Button>
+            <Button 
+              onClick={claimYBGTTokens} 
+              isLoading={claimingYBGT} 
+              disabled={balancesLoading || !!balancesError || claimingHoney || claimingYBGT}
+            >
+              Claim yBGT
+            </Button>
+          </div>
         </div>
       </Row>
       {error && <div className="text-xs text-red-400 mt-2">{error}</div>}

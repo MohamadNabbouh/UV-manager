@@ -61,11 +61,16 @@ export default function InfoSection({ error }: InfoSectionProps) {
 
   return (
     <div className="py-6 space-y-3">
-      <div className="space-y-1">
+      <div className="space-y-2">
         <p className="text-sm text-white/60">HS: HONEY — <span className="text-white/90">Balance: {showBal}</span></p>
-        <p className="text-sm text-white/50 pl-2">
-          (Multisig: {multisigBalanceFormatted} + 50% Performance Fees: {performanceFeesFormatted})
-        </p>
+        <div className="space-y-1 pl-2">
+          <p className="text-base text-white/80">
+            Multisig: {multisigBalanceFormatted}
+          </p>
+          <p className="text-base text-white/80">
+            50% Performance Fees: {performanceFeesFormatted}
+          </p>
+        </div>
       </div>
       
       {/* Percentage input */}
