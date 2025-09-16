@@ -60,8 +60,8 @@ export default function InfoSection({ error }: InfoSectionProps) {
   }, [performanceFeesRaw, dec]);
 
   return (
-    <div className="py-6 space-y-3">
-      <div className="space-y-2">
+    <div className="py-4 space-y-2">
+      <div className="space-y-1">
         <p className="text-sm text-white/60">HS: HONEY — <span className="text-white/90">Balance: {showBal}</span></p>
         <div className="space-y-1 pl-2">
           <p className="text-base text-white/80">

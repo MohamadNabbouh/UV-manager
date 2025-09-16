@@ -7,7 +7,7 @@ export default function BurnUvBgtCard() {
   const { amount, setAmount, isBurning, burn, txHash, error, display } = useUvBgtBurn();
 
   return (
-    <Card className="p-4 space-y-3">
+    <section className="border-b border-white/10">
       <div className="flex items-center justify-between py-6">
         <div className="space-y-1">
           <div className="text-xs text-muted-foreground">total uvBGT supply − uvBGT @ 0x0000…0000</div>
@@ -40,6 +40,6 @@ export default function BurnUvBgtCard() {
         </div>
       )}
       {error && <div className="text-xs text-red-500">{error}</div>}
-    </Card>
+    </section>
   );
 }

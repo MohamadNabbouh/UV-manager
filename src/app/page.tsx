@@ -8,6 +8,9 @@ import RedeemYbgt from '@/components/RedeemYbgt';
 import InfoSection from '@/components/InfoSection';
 import BurnUvBgtCard from '@/components/BurnUvBgtCard';
 import { useClaimBalances } from '@/hooks/useClaimBalances';
+import SetValidatorPubkeyCard from '@/components/SetValidatorPubkeyCard';
+import UnstakeSection from '@/components/UnstakeSection';
+import MultisigHoldings from '@/components/MultisigHoldings';
 
 export default function Page() {
   const { error: balancesError } = useClaimBalances();
@@ -32,10 +35,17 @@ export default function Page() {
         )}
         
         <PerformanceFees />
-        <InfoSection />
+        
+        <div className="grid md:grid-cols-2 gap-4">
+          <InfoSection />
+          <MultisigHoldings />
+        </div>
+        
         <AddRewards />
+        <UnstakeSection />
         <RedeemYbgt />
         <BurnUvBgtCard />
+        <SetValidatorPubkeyCard />
       </Card>
     </main>
   );
