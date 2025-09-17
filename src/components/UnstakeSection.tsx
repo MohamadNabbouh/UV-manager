@@ -41,6 +41,9 @@ export default function UnstakeSection(props: Props) {
           />
         </div>
         
+        <div className="text-xs text-muted-foreground opacity-70">
+          <p><strong>What to enter:</strong> Amount in token units (decimals handled automatically) + Max loss in basis points (100 = 1%)</p>        </div>
+        
         <div className="flex gap-2">
           <Button onClick={unstake} disabled={!canSubmit} isLoading={isSubmitting}>
             Unstake

@@ -2,6 +2,7 @@
 
 import { Card } from '@/components/ui';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import Link from 'next/link';
 import PerformanceFees from '@/components/PerformanceFees';
 import AddRewards from '@/components/AddRewards';
 import RedeemYbgt from '@/components/RedeemYbgt';
@@ -11,6 +12,7 @@ import { useClaimBalances } from '@/hooks/useClaimBalances';
 import SetValidatorPubkeyCard from '@/components/SetValidatorPubkeyCard';
 import UnstakeSection from '@/components/UnstakeSection';
 import MultisigHoldings from '@/components/MultisigHoldings';
+import QueueDropBoostCard from '@/components/QueueDropBoostCard';
 
 export default function Page() {
   const { error: balancesError } = useClaimBalances();
@@ -23,7 +25,15 @@ export default function Page() {
           <div className="h-6 w-6 rounded-full bg-violet-500" />
           <span className="text-lg font-semibold">UV Manager</span>
         </div>
-        <ConnectButton showBalance={false} chainStatus="none" />
+        <div className="flex items-center gap-4">
+          <Link 
+            href="/uvPrem" 
+            className="text-sm text-purple-300 hover:text-white transition-colors"
+          >
+            UV Prem
+          </Link>
+          <ConnectButton showBalance={false} chainStatus="none" />
+        </div>
       </div>
 
       <Card className="p-4 md:p-6">
@@ -46,6 +56,7 @@ export default function Page() {
         <RedeemYbgt />
         <BurnUvBgtCard />
         <SetValidatorPubkeyCard />
+        <QueueDropBoostCard />
       </Card>
     </main>
   );
