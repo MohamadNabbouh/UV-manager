@@ -26,7 +26,6 @@ export default function MultisigHoldings() {
           <div key={b.token.address} className="flex items-center justify-between rounded-lg border px-3 py-2">
             <div className="flex flex-col">
               <span className="text-sm font-medium">{b.token.symbol}</span>
-              <span className="text-[11px] opacity-70 break-all">{b.token.address}</span>
             </div>
             <div className="text-right">
               <div className="text-sm font-mono">{Number(b.amount).toLocaleString()}</div>

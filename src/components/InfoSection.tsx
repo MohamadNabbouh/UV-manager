@@ -60,39 +60,49 @@ export default function InfoSection({ error }: InfoSectionProps) {
   }, [performanceFeesRaw, dec]);
 
   return (
-    <div className="py-4 space-y-2">
-      <div className="space-y-1">
-        <p className="text-sm text-white/60">HS: HONEY — <span className="text-white/90">Balance: {showBal}</span></p>
-        <div className="space-y-1 pl-2">
-          <p className="text-base text-white/80">
-            Multisig: {multisigBalanceFormatted}
-          </p>
-          <p className="text-base text-white/80">
-            50% Performance Fees: {performanceFeesFormatted}
+    <div className="py-6 space-y-4">
+      {/* Header */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-white/90">HS: HONEY Balance</h3>
+        <div className="text-2xl font-mono text-white/90">{Number(showBal).toLocaleString()}</div>
+      </div>
+
+      {/* Breakdown */}
+      <div className="space-y-2">
+        <div className="flex justify-between items-center py-2 px-3 rounded-lg bg-white/5 border border-white/10">
+          <span className="text-sm text-white/70">Multisig</span>
+          <span className="text-sm font-mono text-white/90">{Number(multisigBalanceFormatted).toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between items-center py-2 px-3 rounded-lg bg-white/5 border border-white/10">
+          <span className="text-sm text-white/70">50% Performance Fees</span>
+          <span className="text-sm font-mono text-white/90">{Number(performanceFeesFormatted).toLocaleString()}</span>
+        </div>
+      </div>
+      
+      {/* Bribe Calculator */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-white/70">Keep:</span>
+          <Input 
+            value={bribePercentage} 
+            onChange={(e) => setBribePercentage(e.target.value)} 
+            placeholder="0" 
+            type="number"
+            min="0"
+            max="100"
+            className="w-16 text-center text-sm"
+          />
+          <span className="text-sm text-white/70">%</span>
+        </div>
+        
+        <div className="p-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
+          <p className="text-xs text-violet-300 mb-1">Recommended Bribe Amount</p>
+          <p className="text-lg font-mono text-violet-100">
+            {Number(formatUnits(shouldBribeWei as bigint, dec)).toLocaleString()} HONEY
           </p>
         </div>
       </div>
       
-      {/* Percentage input */}
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-white/60">Keep:</span>
-        <Input 
-          value={bribePercentage} 
-          onChange={(e) => setBribePercentage(e.target.value)} 
-          placeholder="0" 
-          type="number"
-          min="0"
-          max="100"
-          className="w-12 text-center text-xs"
-        />
-        <span className="text-xs text-white/60">%</span>
-      </div>
-      
-      <p className="text-sm text-white/60">
-        Based on data above you should bribe: <span className="text-white/90">
-          {formatUnits(shouldBribeWei as bigint, dec)} HONEY
-        </span>
-      </p>
       {error && <p className="text-xs text-red-300">{error}</p>}
     </div>
   );

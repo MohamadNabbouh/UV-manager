@@ -28,8 +28,15 @@ type TokenBalance = {
 
 const DEST = (process.env.NEXT_PUBLIC_CLAIM_DESTINATION || '').trim() as Address;
 const DEXSCREENER_PAIR = (process.env.NEXT_PUBLIC_WBERA_DEXSCREENER_PAIR_80094 || '').trim();
-const HONEY = (process.env.NEXT_PUBLIC_HONEY_80094 || '').trim() as Address;
-const YBGT  = (process.env.NEXT_PUBLIC_YBGT_80094 || '').trim() as Address;
+
+const HONEY  = (process.env.NEXT_PUBLIC_HONEY_80094 || '').trim() as Address;
+const YBGT   = (process.env.NEXT_PUBLIC_YBGT_80094  || '').trim() as Address;
+const UVBGT  = (process.env.NEXT_PUBLIC_UVBGT_80094 || '').trim() as Address;
+
+const WBERA  = (process.env.NEXT_PUBLIC_WBERA_80094 || '').trim() as Address;
+const USDCE  = (process.env.NEXT_PUBLIC_USDCE_80094 || '').trim() as Address;
+const IBGT   = (process.env.NEXT_PUBLIC_IBGT_80094  || '').trim() as Address;
+const SWBERA = (process.env.NEXT_PUBLIC_SWBERA_80094|| '').trim() as Address;
 
 /** Try to learn WBERA address + price from Dexscreener pair (public, no key) */
 async function loadWberaFromDexscreener(pair: string): Promise<{ address?: Address; priceUsd?: number }>{
@@ -67,17 +74,20 @@ export function useMultisigHoldings() {
       setLoading(true); setError(null);
 
       try {
-        // Build initial list from known envs
+        // Build the list strictly from envs (one per token).
         const list: TokenMeta[] = [];
-        if (HONEY) list.push({ address: HONEY, symbol: 'HONEY', name: 'Honey', decimals: 18 });
-        if (YBGT)  list.push({ address: YBGT,  symbol: 'yBGT',  name: 'Yield BGT', decimals: 18 });
+        [HONEY, YBGT, UVBGT, WBERA, USDCE, IBGT, SWBERA]
+          .filter(Boolean)
+          .forEach((addr) => list.push({ address: addr as Address }));
 
-        // Try to auto-add WBERA from Dexscreener pair
-        const { address: wberaAddr, priceUsd: wberaUsd } = await loadWberaFromDexscreener(DEXSCREENER_PAIR);
-        if (wberaAddr) list.push({ address: wberaAddr, symbol: 'WBERA', name: 'Wrapped BERA', decimals: 18, pricingHint: 'bera', priceUsd: wberaUsd });
-
-        // (Optional) If you know USDC.e address, add it here with usd-pegged:
-        // list.push({ address: '0x...USDCe' as Address, symbol: 'USDC.e', name: 'Bridged USDC', decimals: 6, pricingHint: 'usd-pegged' });
+        // Optional: fetch WBERA price from Dexscreener and attach it
+        try {
+          const { address: dsWbera, priceUsd } = await loadWberaFromDexscreener(DEXSCREENER_PAIR);
+          if (dsWbera && priceUsd) {
+            const hit = list.find(t => t.address.toLowerCase() === (WBERA || dsWbera).toLowerCase());
+            if (hit) { hit.priceUsd = priceUsd; hit.pricingHint = 'bera'; }
+          }
+        } catch {}
 
         // Fetch token data individually (Berachain doesn't support multicall3)
         const enriched = await Promise.all(
@@ -154,10 +164,12 @@ export function useMultisigHoldings() {
         const withBalances: TokenBalance[] = enriched.map(t => {
           const raw = t.__raw || BigInt(0);
           const amount = formatUnits(raw, t.decimals);
-          // simple pricing: explicit price, usd-pegged, or wbera
+          // USD calculation with proper handling for USDC.e and WBERA
+          const sym = (t.symbol ?? '').toUpperCase();
           let usd: number | undefined;
           if (t.priceUsd !== undefined) usd = Number(amount) * Number(t.priceUsd);
-          else if (t.pricingHint === 'usd-pegged') usd = Number(amount) * 1;
+          else if (/^USDC(\.E)?$/.test(sym)) usd = Number(amount) * 1;     // USD-pegged
+          // (WBERA handled via priceUsd above)
           return {
             token: { address: t.address, symbol: t.symbol, name: t.name, decimals: t.decimals, logoURI: t.logoURI, pricingHint: t.pricingHint },
             raw,

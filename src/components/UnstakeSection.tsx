@@ -13,7 +13,7 @@ type Props = {
 
 export default function UnstakeSection(props: Props) {
   const {
-    amount, setAmount, maxLoss, setMaxLoss, unstake, unstakeAll, canSubmit,
+    amount, setAmount, maxLoss, setMaxLoss, unstake, unstakeAll, canSubmit, canSubmitUnstakeAll,
     isSubmitting, txHash, error, staking,
   } = useUnstake({ staking: props.staking, decimals: props.decimals });
 
@@ -27,13 +27,13 @@ export default function UnstakeSection(props: Props) {
       <div className="space-y-3">
         <div className="flex items-center gap-3">
           <Input
-            placeholder="Amount"
+            placeholder="Amount (e.g., 0.1)"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             inputMode="decimal"
           />
           <Input
-            placeholder="Max Loss (basis points)"
+            placeholder="Max Loss BP (e.g., 100 = 1%)"
             value={maxLoss}
             onChange={(e) => setMaxLoss(e.target.value)}
             inputMode="numeric"
@@ -47,7 +47,7 @@ export default function UnstakeSection(props: Props) {
           </Button>
           <Button 
             onClick={unstakeAll} 
-            disabled={!canSubmit || isSubmitting} 
+            disabled={!canSubmitUnstakeAll || isSubmitting} 
             isLoading={isSubmitting}
             className="bg-red-600 hover:bg-red-500"
           >
@@ -69,7 +69,22 @@ export default function UnstakeSection(props: Props) {
         </div>
       )}
 
-      {error && <div className="text-sm text-red-500">{error}</div>}
+      {error && (
+        <div className="space-y-2">
+          <div className="text-sm text-red-500">{error}</div>
+          {error.includes('0x6e6c2928') && (
+            <div className="text-xs text-yellow-400 bg-yellow-900/20 p-2 rounded">
+              💡 This error might indicate insufficient staked balance or minimum amount requirements. 
+              Try a smaller amount or check your staked balance.
+            </div>
+          )}
+          {error.includes('Contract error') && (
+            <div className="text-xs text-blue-400 bg-blue-900/20 p-2 rounded">
+              💡 Try different amounts: 0.01, 0.001, or use &quot;Unstake All&quot; if you have any staked tokens.
+            </div>
+          )}
+        </div>
+      )}
     </Card>
   );
 }
