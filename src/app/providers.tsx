@@ -14,13 +14,14 @@ const berachain = defineChain({
   blockExplorers: { default: { name: 'BeraScan', url: 'https://berascan.com' } },
 });
 
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!;
 const queryClient = new QueryClient();
 
 const config = getDefaultConfig({
-  appName: 'BERA Deposit UI',
+  appName: 'UV Manager',
+  projectId,
   chains: [berachain],
   transports: { [berachain.id]: http('https://rpc.berachain.com') },
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
 });
 
 export default function Providers({ children }: { children: React.ReactNode }) {

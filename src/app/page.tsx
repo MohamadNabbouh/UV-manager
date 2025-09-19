@@ -13,51 +13,54 @@ import SetValidatorPubkeyCard from '@/components/SetValidatorPubkeyCard';
 import UnstakeSection from '@/components/UnstakeSection';
 import MultisigHoldings from '@/components/MultisigHoldings';
 import QueueDropBoostCard from '@/components/QueueDropBoostCard';
+import AdminOnly from '@/components/AdminOnly';
 
 export default function Page() {
   const { error: balancesError } = useClaimBalances();
 
   return (
-    <main className="mx-auto max-w-4xl px-4 pb-16">
-      {/* Top bar */}
-      <div className="flex items-center justify-between py-6">
-        <div className="flex items-center gap-3">
-          <div className="h-6 w-6 rounded-full bg-violet-500" />
-          <span className="text-lg font-semibold">UV Manager</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link 
-            href="/uvPrem" 
-            className="text-sm text-purple-300 hover:text-white transition-colors"
-          >
-            UV Prem
-          </Link>
-          <ConnectButton showBalance={false} chainStatus="none" />
-        </div>
-      </div>
-
-      <Card className="p-4 md:p-6">
-        {/* Error Display */}
-        {balancesError && (
-          <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-red-400 text-sm">
-            Error loading balances: {balancesError.message}
+    <AdminOnly>
+      <main className="mx-auto max-w-4xl px-4 pb-16">
+        {/* Top bar */}
+        <div className="flex items-center justify-between py-6">
+          <div className="flex items-center gap-3">
+            <div className="h-6 w-6 rounded-full bg-violet-500" />
+            <span className="text-lg font-semibold">UV Manager</span>
           </div>
-        )}
-        
-        <PerformanceFees />
-        
-        <div className="grid md:grid-cols-2 gap-4">
-          <InfoSection />
-          <MultisigHoldings />
+          <div className="flex items-center gap-4">
+            <Link 
+              href="/uvPrem" 
+              className="text-sm text-purple-300 hover:text-white transition-colors"
+            >
+              UV Prem
+            </Link>
+            <ConnectButton showBalance={false} chainStatus="none" />
+          </div>
         </div>
-        
-        <AddRewards />
-        <UnstakeSection />
-        <RedeemYbgt />
-        <BurnUvBgtCard />
-        <SetValidatorPubkeyCard />
-        <QueueDropBoostCard />
-      </Card>
-    </main>
+
+        <Card className="p-4 md:p-6">
+          {/* Error Display */}
+          {balancesError && (
+            <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-red-400 text-sm">
+              Error loading balances: {balancesError.message}
+            </div>
+          )}
+          
+          <PerformanceFees />
+          
+          <div className="grid md:grid-cols-2 gap-4">
+            <InfoSection />
+            <MultisigHoldings />
+          </div>
+          
+          <AddRewards />
+          <UnstakeSection />
+          <RedeemYbgt />
+          <BurnUvBgtCard />
+          <SetValidatorPubkeyCard />
+          <QueueDropBoostCard />
+        </Card>
+      </main>
+    </AdminOnly>
   );
 }
