@@ -2,6 +2,7 @@
 import { Row, Button } from "@/components/ui";
 import { useClaimBalances } from "@/hooks/useClaimBalances";
 import { useClaimTokens } from "@/hooks/useClaimTokens";
+import { useUnboostedBgt } from "@/hooks/useUnboostedBgt";
 import { useState } from "react";
 import { formatUnits } from "viem";
 
@@ -11,6 +12,7 @@ export default function PerformanceFees() {
   const [error, setError] = useState<string | null>(null);
   const { balances, isLoading: balancesLoading, error: balancesError, refetchAll } = useClaimBalances();
   const { claimHoney, claimYBGT } = useClaimTokens();
+  const { formatted: unboostedBalance } = useUnboostedBgt();
 
   // Format token amounts for display
   const formatTokenAmount = (raw: bigint | undefined, decimals: number = 18): string => {
@@ -52,6 +54,9 @@ export default function PerformanceFees() {
       <Row>
         <div className="text-sm md:text-base">
           <div className="font-medium">50% Performance Fees collected</div>
+          <div className="font-medium">
+            Unboosted: {unboostedBalance} BGT
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="text-right leading-tight">

@@ -1,10 +1,10 @@
 'use client';
 
-import { Card, Button, Input } from '@/components/ui';
+import { Button, Input } from '@/components/ui';
 import { useSetValidatorPubKey } from '@/hooks/useSetValidatorPubKey';
 
 export default function SetValidatorPubkeyCard() {
-  const { pubkeys, addPubkey, removePubkey, updatePubkey, submit, isSubmitting, txHash, error } = useSetValidatorPubKey();
+  const { pubkeys, removePubkey, updatePubkey, submit, isSubmitting, txHash, error } = useSetValidatorPubKey();
 
   return (
     <section className="border-b border-white/10">
@@ -37,9 +37,6 @@ export default function SetValidatorPubkeyCard() {
           ))}
           
           <div className="flex items-center gap-2">
-            <Button onClick={addPubkey} >
-              + Add PubKey
-            </Button>
             <Button 
               onClick={submit} 
               isLoading={isSubmitting} 

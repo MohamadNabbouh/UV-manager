@@ -1,9 +1,8 @@
 'use client';
 
 import { Card } from '@/components/ui';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import Link from 'next/link';
 import PerformanceFees from '@/components/PerformanceFees';
+import Navbar from '@/components/Navbar';
 import AddRewards from '@/components/AddRewards';
 import RedeemYbgt from '@/components/RedeemYbgt';
 import InfoSection from '@/components/InfoSection';
@@ -20,23 +19,8 @@ export default function Page() {
 
   return (
     <AdminOnly>
+      <Navbar />
       <main className="mx-auto max-w-4xl px-4 pb-16">
-        {/* Top bar */}
-        <div className="flex items-center justify-between py-6">
-          <div className="flex items-center gap-3">
-            <div className="h-6 w-6 rounded-full bg-violet-500" />
-            <span className="text-lg font-semibold">UV Manager</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link 
-              href="/uvPrem" 
-              className="text-sm text-purple-300 hover:text-white transition-colors"
-            >
-              UV Prem
-            </Link>
-            <ConnectButton showBalance={false} chainStatus="none" />
-          </div>
-        </div>
 
         <Card className="p-4 md:p-6">
           {/* Error Display */}

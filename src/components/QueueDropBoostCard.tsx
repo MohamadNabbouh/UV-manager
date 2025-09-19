@@ -3,7 +3,6 @@
 import { Button, Input } from '@/components/ui';
 import { formatUnits } from 'viem';
 import { useQueueDropBoost } from '@/hooks/useQueueDropBoost';
-import { useUnboostedBgt } from '@/hooks/useUnboostedBgt';
 
 export default function QueueDropBoostCard() {
   const {
@@ -18,7 +17,6 @@ export default function QueueDropBoostCard() {
     queueDropBoost,
   } = useQueueDropBoost();
 
-  const { formatted: unboostedBalance } = useUnboostedBgt();
 
   const boostedFmt = (() => {
     try { return formatUnits(boosted, decimals ?? 18); } catch { return '0'; }
@@ -29,9 +27,8 @@ export default function QueueDropBoostCard() {
       <div className="flex items-center justify-between py-6">
         <div className="space-y-1">
           <div className="text-xs text-muted-foreground">Queue Drop Boost</div>
-          <div className="text-sm space-y-1">
+          <div className="text-sm">
             <div>BGT Balance: {boostedFmt} BGT</div>
-            <div className="text-xs text-muted-foreground">Unboosted: {unboostedBalance} BGT</div>
           </div>
         </div>
 
