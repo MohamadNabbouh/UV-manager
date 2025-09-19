@@ -62,7 +62,7 @@ export function useQueueDropBoost() {
         address: BGT,
         abi: treasuryDistributorAbi,
         functionName: 'queueDropBoost',
-        args: [pubkey, parsedAmount as bigint],
+        args: [pubkey, parsedAmount],
       });
 
       setTxHash(hash);
