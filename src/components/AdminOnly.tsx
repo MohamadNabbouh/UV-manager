@@ -1,6 +1,6 @@
 'use client';
 
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, useState, useEffect } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAdminGate } from '@/hooks/useAdminGate';
 import { useSwitchChain } from 'wagmi';
@@ -9,6 +9,27 @@ export default function AdminOnly({ children }: PropsWithChildren) {
   const MAINNET_ID = Number(process.env.NEXT_PUBLIC_MAINNET_ID || 80094);
   const { status, address, chainId } = useAdminGate({ enforceChainId: MAINNET_ID });
   const { switchChain } = useSwitchChain();
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Prevent flash of login popup during initial load and navigation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialized(true);
+    }, 200); // Simple delay to prevent flash
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show loading state during initialization to prevent flash
+  if (!isInitialized) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 pb-16">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div>
+        </div>
+      </div>
+    );
+  }
 
   if (status === 'connecting' || status === 'disconnected') {
     return (
