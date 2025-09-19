@@ -1,10 +1,26 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui';
 import { useMultisigHoldings } from '@/hooks/useMultisigHoldings';
+import { getWberaPriceUsd } from '@/lib/pricing';
 
 export default function MultisigHoldings() {
   const { loading, error, balances, totalUsd } = useMultisigHoldings();
+  const [wberaUsd, setWberaUsd] = useState<number | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const p = await getWberaPriceUsd();
+      if (mounted) setWberaUsd(p);
+    })();
+    const id = setInterval(async () => {
+      const p = await getWberaPriceUsd();
+      if (mounted) setWberaUsd(p);
+    }, 30_000);
+    return () => { mounted = false; clearInterval(id); };
+  }, []);
 
   return (
     <Card className="w-full p-4 space-y-3">
@@ -22,19 +38,27 @@ export default function MultisigHoldings() {
       )}
 
       <div className="space-y-2">
-        {balances.map((b) => (
-          <div key={b.token.address} className="flex items-center justify-between rounded-lg border px-3 py-2">
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">{b.token.symbol}</span>
+        {balances.map((b) => {
+          // Calculate USD value - use live WBERA price for WBERA tokens
+          let usdValue = b.usd;
+          if (b.token.symbol?.toUpperCase() === 'WBERA' && wberaUsd !== null) {
+            usdValue = Number(b.amount) * wberaUsd;
+          }
+
+          return (
+            <div key={b.token.address} className="flex items-center justify-between rounded-lg border px-3 py-2">
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">{b.token.symbol}</span>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-mono">{Number(b.amount).toLocaleString()}</div>
+                {usdValue !== undefined && (
+                  <div className="text-[11px] opacity-70">≈ ${usdValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                )}
+              </div>
             </div>
-            <div className="text-right">
-              <div className="text-sm font-mono">{Number(b.amount).toLocaleString()}</div>
-              {b.usd !== undefined && (
-                <div className="text-[11px] opacity-70">≈ ${b.usd.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
-              )}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </Card>
   );
