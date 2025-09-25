@@ -10,15 +10,15 @@ import treasuryDistributorAbi from "@/abis/TreasuryDistributor.json";
 const UVPREM_VAULT = process.env.NEXT_PUBLIC_UV_REWARD_VAULT_UVPREM_IBERA_CONTRACT!.trim() as `0x${string}`;
 const UVBERA_VAULT = process.env.NEXT_PUBLIC_UV_REWARD_VAULT_UVBERA_WBERA_CONTRACT!.trim() as `0x${string}`;
 
-// For now, we'll use HONEY and YBGT as the reward tokens since the UV token addresses aren't defined
-// TODO: Replace with actual UV token addresses when available
+// Token addresses for rewards
 const HONEY = process.env.NEXT_PUBLIC_HONEY_80094!.trim() as `0x${string}`;
 const YBGT = process.env.NEXT_PUBLIC_YBGT_80094!.trim() as `0x${string}`;
+const UVBERA = process.env.NEXT_PUBLIC_UVBERA_80094!.trim() as `0x${string}`;
 const CHAIN = Number(process.env.NEXT_PUBLIC_MAINNET_ID || 80094);
 
 export default function UVRewards() {
   const [rewardAmt, setRewardAmt] = useState<string>('0');
-  const [rewardToken, setRewardToken] = useState<'HONEY' | 'YBGT'>('HONEY');
+  const [rewardToken, setRewardToken] = useState<'HONEY' | 'YBGT' | 'UVBERA'>('HONEY');
   const [vaultType, setVaultType] = useState<'UVPREM' | 'UVBERA'>('UVPREM');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +37,7 @@ export default function UVRewards() {
   }, []);
 
   // Get token address and vault address based on selection
-  const tokenAddress = rewardToken === 'HONEY' ? HONEY : YBGT;
+  const tokenAddress = rewardToken === 'HONEY' ? HONEY : rewardToken === 'YBGT' ? YBGT : UVBERA;
   const vaultAddress = vaultType === 'UVPREM' ? UVPREM_VAULT : UVBERA_VAULT;
 
   // Get token decimals
@@ -162,11 +162,12 @@ export default function UVRewards() {
           />
           <select
             value={rewardToken}
-            onChange={(e) => setRewardToken(e.target.value as 'HONEY' | 'YBGT')}
+            onChange={(e) => setRewardToken(e.target.value as 'HONEY' | 'YBGT' | 'UVBERA')}
             className="rounded-lg bg-purple-800/30 px-3 py-2 text-sm outline-none ring-1 ring-purple-400/30"
           >
             <option>HONEY</option>
             <option>YBGT</option>
+            <option>UVBERA</option>
           </select>
           <Button 
             onClick={addRewards} 
